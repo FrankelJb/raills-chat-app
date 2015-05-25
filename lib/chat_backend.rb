@@ -11,7 +11,7 @@ class ChatBackend
   def initialize app
     @app = app
     @clients = []
-    uri = URI.parse(ENV['REDISCLOUD_URL'])
+    uri = URI.parse(ENV['REDISTOGO_URL'])
     @redis = Redis.new(host: uri.host, port: uri.port, password: uri.password)
     Thread.new do
       redis_sub = Redis.new(host: uri.host, port: uri.port, password: uri.password)
