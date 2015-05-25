@@ -1,8 +1,7 @@
 var ready = function() {
 
   var scheme = "<%= Rails.env == "production" ? "wss://" : "ws://" %>";
-  $('#chat-text').append("<div class='panel panel-default'><div class='panel-heading'>" + scheme + "</div><div class='panel-body'>" + scheme + "</div></div>");
-  var uri = scheme + window.document.location.host + '/'
+  var uri = 'ws://' + window.document.location.host + '/'
   var ws = new WebSocket(uri);
 
   ws.onmessage = function(message) {
