@@ -47,6 +47,7 @@ class ChatBackend
       end
       ws.rack_response
     else
+      puts "got to else calling call supposedly"
       @app.call env
     end
   end
