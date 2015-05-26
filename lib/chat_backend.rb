@@ -25,7 +25,6 @@ class ChatBackend
 
   def call env
     puts "FAYE WEBSOCKER #{Faye::WebSocket.websocket? env}"
-    if Faye::WebSocket.websocket? env
       ws = Faye::WebSocket.new(env, nil, { ping: KEEPALIVE_TIME })
 
       ws.on :open do |event|
@@ -45,9 +44,6 @@ class ChatBackend
         ws = nil
       end
       ws.rack_response
-    else
-      @app.call env
-    end
   end
 
   private
