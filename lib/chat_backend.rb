@@ -11,16 +11,16 @@ class ChatBackend
   def initialize app
     @app = app
     @clients = []
-    uri = URI.parse('redis://localhost:6379')
-    @redis = Redis.new(host: uri.host, port: uri.port, password: uri.password)
-    Thread.new do
-      redis_sub = Redis.new(host: uri.host, port: uri.port, password: uri.password)
-      redis_sub.subscribe(CHANNEL) do |on|
-        on.message do |channel, msg|
-          @clients.each { |ws| ws.send msg }
-        end
-      end
-    end
+    # uri = URI.parse('redis://localhost:6379')
+    # @redis = Redis.new(host: uri.host, port: uri.port, password: uri.password)
+    # Thread.new do
+    #   redis_sub = Redis.new(host: uri.host, port: uri.port, password: uri.password)
+    #   redis_sub.subscribe(CHANNEL) do |on|
+    #     on.message do |channel, msg|
+    #       @clients.each { |ws| ws.send msg }
+    #     end
+    #   end
+    # end
   end
 
   def call env
@@ -35,7 +35,8 @@ class ChatBackend
 
       ws.on :message do |event|
         p [:message, event.data]
-        @redis.publish(CHANNEL, sanitize(event.data))
+        @clients.each {|client| client.send(event.data) }
+        # @redis.publish(CHANNEL, sanitize(event.data))
       end
 
       ws.on :close do |event|
