@@ -1,0 +1,19 @@
+<style type="text/css" media="screen">
+  canvas, img { display:block; margin:1em auto; }
+  canvas { background:url("http://i.imgur.com/yf6d9SX.jpg") }
+</style>
+
+<div>
+  <form>
+    <input name="authenticity_token" type="hidden" value="<%= form_authenticity_token %>" />
+    <canvas id="canvas" width="720" height="576">
+      This text is displayed if your browser does not support HTML5 Canvas.
+    </canvas>
+  </form>
+  <div id='rectangle_details'></div>
+</div>
+
+<script>// <![CDATA[
+init();
+init_dropzone();
+// ]]&gt;</script>

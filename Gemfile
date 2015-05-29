@@ -11,6 +11,7 @@ group :development, :test do
 end
 
 group :production do
+  gem 'puma'
   gem 'pg'
   gem 'rails_12factor', '0.0.2'
 end
@@ -55,6 +56,5 @@ group :development, :test do
 end
 
 gem 'faye-websocket'
-gem 'puma'
 gem 'bootstrap-sass', '~> 3.2.0'
 gem 'redis'

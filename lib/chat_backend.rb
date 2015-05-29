@@ -11,22 +11,20 @@ class ChatBackend
   def initialize app
     @app = app
     @clients = []
-    # uri = URI.parse('redis://localhost:6379')
-    # @redis = Redis.new(host: uri.host, port: uri.port, password: uri.password)
-    # Thread.new do
-    #   redis_sub = Redis.new(host: uri.host, port: uri.port, password: uri.password)
-    #   redis_sub.subscribe(CHANNEL) do |on|
-    #     on.message do |channel, msg|
-    #       @clients.each { |ws| ws.send msg }
-    #     end
-    #   end
-    # end
+    uri = URI.parse('redis://localhost:6379')
+    @redis = Redis.new(host: uri.host, port: uri.port, password: uri.password)
+    Thread.new do
+      redis_sub = Redis.new(host: uri.host, port: uri.port, password: uri.password)
+      redis_sub.subscribe(CHANNEL) do |on|
+        on.message do |channel, msg|
+          @clients.each { |ws| ws.send msg }
+        end
+      end
+    end
   end
 
   def call env
-    puts "FAYE WEBSOCKER #{Faye::WebSocket.websocket? env}"
-    p env
-    if Faye::WebSocket.websocket? env
+    if Faye::WebSocket.websocket?(env)
       ws = Faye::WebSocket.new(env, nil, { ping: KEEPALIVE_TIME })
 
       ws.on :open do |event|
@@ -36,8 +34,7 @@ class ChatBackend
 
       ws.on :message do |event|
         p [:message, event.data]
-        @clients.each {|client| client.send(event.data) }
-        # @redis.publish(CHANNEL, sanitize(event.data))
+        @redis.publish(CHANNEL, sanitize(event.data))
       end
 
       ws.on :close do |event|
@@ -47,8 +44,7 @@ class ChatBackend
       end
       ws.rack_response
     else
-      puts "got to else calling call supposedly"
-      @app.call env
+      @app.call(env)
     end
   end
 
