@@ -1,1 +1,0 @@
-IMPORTANT NOTE: The DTAPI library files have been moved to the WinSDK directory

@@ -4,22 +4,18 @@
   $('html').on('dragbetterenter', ->
     dropzone = $("#canvas").dropzone({
       url: '<%= Rails.application.routes.url_helpers.rectangle_import_background_path %>',
-      acceptedFiles: "image/jpeg,image/png",
+      acceptedFiles: "image/jpeg,image/png,image/jpg",
       init: ->
         @on("error", ->
-          alert('Please try and use a JPEG or PNG rather.')
+          alert('Please try and use a jpg, jpeg or png rather.')
         )
         @on('success', (response) ->
-          console.log(response)
+          $('#right').find('div').remove()
+          update_scroll_images()
         )
     })
-    dropzone.on("addedfile", (file) ->
-      setTimeout( ->
-        dropzone.removeAllFiles()
-      , 1000)
-    )
+    $(".dz-hidden-input").prop("disabled", true)
 
-    $('#canvas').addClass('outline')
   ).on('html', ->
     Dropone.forElement("#canvas").destroy()
     $('#canvas').removeClass('outline')
@@ -30,7 +26,9 @@
   ).on('dragbetterleave', ->
     $('#canvas').removeClass('outline')
   )
-Shape = (state, x, y, w, h, fill) ->
+
+
+Shape = (state, x, y, w, h, fill, is_first) ->
   "use strict"
   @state = state
   @x = x || 0
@@ -38,6 +36,7 @@ Shape = (state, x, y, w, h, fill) ->
   @w = w || 1
   @h = h || 1
   @fill = fill || '#AAAAAA'
+  @is_first = is_first
   return
 
 Shape::draw = (ctx, optionalColor) ->
@@ -45,8 +44,15 @@ Shape::draw = (ctx, optionalColor) ->
   ctx.fillStyle = @fill
   ctx.fillRect(@x, @y, @w, @h)
 
-  if @state.selection == this
-    $('#rectangle_details').append('<p>').text(@x)
+  if @state.selection == this || @is_first
+    @is_first = false
+    json = { rectangles: { x: @x, y: @y, width: @w, height: @h } }
+    if $('input[name=radioName]:checked', '#radio_buttons').val() == 'json'
+      $('#rectangle_details').text(JSON.stringify json )
+    else if $('input[name=radioName]:checked', '#radio_buttons').val() == 'xml'
+      xml = json_2_xml json
+      $('#rectangle_details').text( xml )
+
     ctx.strokeStyle = @state.selectionColour
     ctx.lineWidth = @state.selectionWidth
     ctx.strokeRect(@x, @y, @w, @h)
@@ -164,8 +170,9 @@ CanvasState = (canvas) ->
     if myState.selection
       myState.selection = null
       myState.valid = false
-    return
-  ), true
+      return
+
+    ), true
 
   canvas.addEventListener 'mousemove', ((e) ->
     mouse = myState.getMouse(e)
@@ -302,7 +309,7 @@ CanvasState::draw = ->
       if shape.x <= @width || shape.y <= @height || shape.x + shape.w >= 0 || shape.y + shape.h >= 0
         shapes[i].draw(ctx)
       i++
-    
+
     if @selection != null
       ctx.strokeStyle = @selectionColour
       ctx.lineWidth = @selectionWidth
@@ -336,6 +343,68 @@ CanvasState::getMouse = (e) ->
 @init = ->
   console.log('initing')
   s = new CanvasState(document.getElementById('canvas'))
+  s.addShape(new Shape(s, 70,150,160,130, 'rgba(127, 255, 212, .5)', true))
 
-  s.addShape(new Shape(s, 80,150,160,130, 'rgba(127, 255, 212, .5)'))
+update_scroll_images = ->
+  $.get('/rectangles',((data) ->
+    i = 0
+    $('#right > div').remove()
+    while i < data.length
+      image_path = data[i]
+      $('#right').append("<div id='image_" + i + "' class='scroll_images_div row'>" + \
+                          "<img class='scroll_images img-thumbnail img-thumbnail' src='assets/rectangles/" + image_path.split('/')[image_path.split('/').length - 1] + "' width='90%' height='90%'>" + \
+                          "<span class='glyphicon glyphicon-remove-circle'></span>" + \
+                         "</div>")
+      i++
+  ), 'json').done ->
+    if $('.scroll_images_div').length > 0
+      $('#canvas').css( {'background': "url(" + ($($('.scroll_images')[0]).prop('src')) + ")", 'background-size': '720px 576px' } )
+    $('.scroll_images').click ->
+      $('#canvas').css( {'background': "url(" + $(@).prop('src') + ")", 'background-size': '720px 576px' } )
+    $('.scroll_images_div > .glyphicon').click ->
+      cur_glyphicon = @
+      $.post(
+        '/rectangle/delete_background'
+        src: $(cur_glyphicon).siblings('img').prop('src')
+        'json'
+      ).done ->
+        $(cur_glyphicon).closest('div').slideUp('slow', ->
+          $(cur_glyphicon).closest('div').remove()
+          if $('.scroll_images_div').length > 0
+            $('#canvas').css( {'background': "url(" + ($($('.scroll_images')[0]).prop('src')) + ")", 'background-size': '720px 576px' } )
+          else
+            $('#canvas').css( {'background': "", 'background-size': '720px 576px' } )
+        )
+  
+json_2_xml = (data) ->
+  xml = '<rectangle>'
+  $.each(data, (key, rectangle) ->
+    $.each(rectangle, (key, value) ->
+      xml += '<' + key + '>' + value + '</' + key + '>'
+    )
+  )
+  xml += '</rectangle>'
+
+attach_event_to_radio = ->
+  $('#radio_buttons').change ->
+    if $('input[name=radioName]:checked', '#radio_buttons').val() == 'json'
+      rectangle = $($.parseXML($('#rectangle_details').text())).find('rectangle')
+      json = { rectangle: {} }
+      rectangle.each ->
+        json['rectangle']['x'] = $(@).find('x').text()
+        console.log(json)
+        json['rectangle']['y'] = $(@).find('y').text()
+        json['rectangle']['width'] = $(@).find('width').text()
+        json['rectangle']['height'] = $(@).find('height').text()
+      $('#rectangle_details').text( JSON.stringify json )
+      
+    else if $('input[name=radioName]:checked', '#radio_buttons').val() == 'xml'
+      json = JSON.parse $('#rectangle_details').text()
+      xml = json_2_xml json
+      $('#rectangle_details').text( xml )
+
+$ ->
+  h = $(window).height()
+  update_scroll_images()
+  attach_event_to_radio()
 

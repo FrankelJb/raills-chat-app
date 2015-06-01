@@ -3,6 +3,7 @@ Rails.application.routes.draw do
   
   get 'rectangles' => 'rectangle#index' 
   post 'rectangle/import_background'
+  post 'rectangle/delete_background'
 
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
