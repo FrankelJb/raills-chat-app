@@ -6,9 +6,12 @@
 <div class='container'>
   <div class='col-sm-8' id='left'>
     <div class='row'>
-      <canvas id='canvas' width='720' height='576'>
-        This text is displayed if your browser does not support HTML5 Canvas.
-      </canvas>
+      <form class='dropzone dz-clickable' id='dropzone_div'>
+        <input name="authenticity_token" value="<%= form_authenticity_token %>" type="hidden">
+        <canvas id='canvas' width='720' height='576' class='center-block'>
+          This text is displayed if your browser does not support HTML5 Canvas.
+        </canvas>
+      </form>
     </div>
     <div class='row'>
       <div class='col-sm-1' id='radio_buttons'>
@@ -31,7 +34,7 @@
     </div>
   </div>
   <div class='col-sm-4' id='right'>
-
+    <%= render 'right_images' %>
   </div>
 </div>
 

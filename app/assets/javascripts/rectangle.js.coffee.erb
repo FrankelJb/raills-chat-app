@@ -4,6 +4,7 @@
   $('html').on('dragbetterenter', ->
     dropzone = $("#canvas").dropzone({
       url: '<%= Rails.application.routes.url_helpers.rectangle_import_background_path %>',
+      params: { authenticity_token: $('meta[name="csrf-token"]').attr('content')  }
       acceptedFiles: "image/jpeg,image/png,image/jpg",
       init: ->
         @on("error", ->
@@ -11,6 +12,7 @@
         )
         @on('success', (response) ->
           $('#right').find('div').remove()
+          $('#right').append(response.xhr.responseText)
           update_scroll_images()
         )
     })
@@ -346,17 +348,6 @@ CanvasState::getMouse = (e) ->
   s.addShape(new Shape(s, 70,150,160,130, 'rgba(127, 255, 212, .5)', true))
 
 update_scroll_images = ->
-  $.get('/rectangles',((data) ->
-    i = 0
-    $('#right > div').remove()
-    while i < data.length
-      image_path = data[i]
-      $('#right').append("<div id='image_" + i + "' class='scroll_images_div row'>" + \
-                          "<img class='scroll_images img-thumbnail img-thumbnail' src='assets/rectangles/" + image_path.split('/')[image_path.split('/').length - 1] + "' width='90%' height='90%'>" + \
-                          "<span class='glyphicon glyphicon-remove-circle'></span>" + \
-                         "</div>")
-      i++
-  ), 'json').done ->
     if $('.scroll_images_div').length > 0
       $('#canvas').css( {'background': "url(" + ($($('.scroll_images')[0]).prop('src')) + ")", 'background-size': '720px 576px' } )
     $('.scroll_images').click ->
@@ -365,7 +356,7 @@ update_scroll_images = ->
       cur_glyphicon = @
       $.post(
         '/rectangle/delete_background'
-        src: $(cur_glyphicon).siblings('img').prop('src')
+        src: $(cur_glyphicon).siblings('img').prop('name')
         'json'
       ).done ->
         $(cur_glyphicon).closest('div').slideUp('slow', ->

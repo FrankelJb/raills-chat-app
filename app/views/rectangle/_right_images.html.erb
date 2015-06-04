@@ -1,0 +1,8 @@
+<% if @images.any? %>
+  <% @images.each_with_index do |image, i| %>
+    <div id="image_<%= i %>" class='scroll_images_div row'>
+      <%= image_tag(image_path("rectangles/#{image}"), name: image, class: 'scroll_images img-thumbnail', width: '90%', height: '90%') %>
+      <span class='glyphicon glyphicon-remove-circle'></span>
+    </div>
+  <% end %>
+<% end %>

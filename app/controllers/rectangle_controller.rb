@@ -1,23 +1,32 @@
 require 'uri'
 
 class RectangleController < ApplicationController
-  skip_before_filter :verify_authenticity_token, :only => [:import_background]
   DIRECTORY = 'app/assets/images/rectangles'
 
   def index
+    Dir.mkdir(DIRECTORY) unless File.exists?(DIRECTORY)
+    get_images
     respond_to do |format|
       format.html
-      format.json { render json: @images = Dir.glob('app/assets/images/rectangles/*.{JPG,jpg,jpeg,png,PNG}') }
+      format.js
+    end
+  end
+
+  def get_images
+    @images = []
+    Dir.chdir("#{Rails.root}/app/assets/images/rectangles") do
+      @images = Dir["**"].each {|f| @images << f}
     end
   end
 
   def import_background
-    name =  params['file'].original_filename
+    name = params['file'].original_filename
     path = File.join(DIRECTORY, name)
     File.open(path, "wb") { |f| f.write(params['file'].read) }
     @file_name = path
+    get_images
     respond_to do |format|
-      format.json { render json: @file_name, :status => 200 }
+      format.json { render partial: 'import_background' }
     end
   end
 
